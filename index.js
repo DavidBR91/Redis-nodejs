@@ -1,8 +1,10 @@
-var http = require('http');
+var server = require("./server");
+var router = require("./router");
+var requestHandlers = require("./requestHandlers");
 
-http.createServer(function (req, res) {  
-  res.writeHead(200, {'Content-Type': 'text/plain'});  
-  res.  
-}).listen(8080);  
-  
-console.log('Server listen to the port 8080');
+var handle = {}
+handle["/"] = requestHandlers.iniciar;
+handle["/iniciar"] = requestHandlers.iniciar;
+handle["/subir"] = requestHandlers.subir;
+
+server.iniciar(router.route,handle);
