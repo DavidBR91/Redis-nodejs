@@ -1,5 +1,7 @@
 
 client = require("redis").createClient();
+var qs = require('querystring');
+var url= require("url");
 
 function addUser(id, email, nombre_com){
 	client.hset(id, "email", email);
@@ -9,21 +11,39 @@ function addUser(id, email, nombre_com){
 
 function getUser(response,id){
 	client.hgetall(id,function (err, replies) {
-		console.log(replies);
-        	response.writeHead(200, {"Content-Type": "text/plain"});
-        	response.write(replies["email"]);
-        	response.write(replies["nombre_com"]);
-    		response.end();
-        	
+		if(replies==null){
+			response.writeHead(404, {"Content-Type": "text/plain"});
+   			response.write("404 Not found");
+    			response.end();
+		}else{
+			response.writeHead(200, {"Content-Type": "text/plain"});
+			response.write(replies["email"]);
+			response.write(replies["nombre_com"]);
+	    		response.end();
+        	}
     	});
 }
 
-function becarios(method,req_url,response) {
+function becarios(request,response) {
+    
+    var req_url=url.parse(request.url,true);
+    
+    var method=request.method;
   
     if(method=='GET'){
-	console.log("se hizo peticion get con" + req_url.query);
-	addUser("fgodino","fgodino@conwet.com","Fernando Godino");
-	getUser(response,"fgodino");
+	var usuario = req_url.query['id'];
+	console.log(usuario);
+	getUser(response,usuario);
+    }
+    if(method=='POST'){
+	var body = '';
+        request.on('data', function (data) {
+            body += data;
+        });
+        request.on('end', function () {
+            var posted = qs.parse(body);
+            addUser(posted["id"],posted["email"],posted["nombre_com"]);
+        });
     }
 }
 
