@@ -4,11 +4,10 @@ var url= require("url");
 function iniciar(route,handle) {
   function onRequest(request, response) {
     console.log("Petición Recibida.");
-    var pathname=url.parse(request.url).pathname;
-    route(handle, pathname);
-    response.writeHead(200, {"Content-Type": "text/html"});
-    response.write("Hola Mundo");
-    response.end();
+    var req_url=url.parse(request.url);
+    var method=request.method;
+    
+    route(handle, req_url, method,response);
   }
 
   http.createServer(onRequest).listen(8888);
