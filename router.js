@@ -6,7 +6,11 @@ function route(handle, request, response) {
   console.log("A punto de rutear una peticion para " + req_url.pathname);
   if (typeof handle[req_url.pathname] === 'function') {
     handle[req_url.pathname](request,response);
-  } else {
+  }else if(req_url.pathname=="/favicon.ico"){
+    console.log("No se encontro manipulador para " + req_url.pathname);
+    console.log("No se hace nada");
+  }
+   else {
     console.log("No se encontro manipulador para " + req_url.pathname);
     response.writeHead(404, {"Content-Type": "text/plain"});
     response.write("404 Not found");
