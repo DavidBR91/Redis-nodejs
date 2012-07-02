@@ -5,7 +5,7 @@ var qs = require('querystring');
 var url= require("url");
 var req_url=null;
 
-function addUser(id, email, nombre_com,response){
+function addUser(id, email, nombre_com,req_url,response){
 	if(client.hlen(id)==0){
 		client.hset(id, "email", email);
 		client.hset(id, "nombre_com", nombre_com);
@@ -22,15 +22,20 @@ function addUser(id, email, nombre_com,response){
 }
 
 function getUser(response,id){
+	
 	client.hgetall(id,function (err, replies) {
 		if(replies==null){
 			response.writeHead(404, {"Content-Type": "text/plain"});
    			response.write("404 Not found");
     			response.end();
 		}else{
+			var contacto = new Object();
+			contacto.id=id;
+			contacto.email=replies["email"];
+			contacto.nombre_completo=replies["nombre_com"];
+			var repuestaJSON=JSON.stringify(contacto);
 			response.writeHead(200, {"Content-Type": "text/plain"});
-			response.write(replies["email"]);
-			response.write(replies["nombre_com"]);
+			response.write(repuestaJSON);
 	    		response.end();
         	}
     	});
@@ -42,11 +47,13 @@ function getUsers(from, to, response){
 	if (from==null) from=0;
 	async.waterfall([
 	
-	function(callback){
-		if (to==null) client.llen("users", function(err, reply){
-			to=reply;
-			callback(null,to);
-		});
+	function (callback) {
+		if (to==null) {
+			client.llen("users", function(err, reply){
+				to=reply;
+				callback(null,to);
+			});
+		}
 	},
 	function(to, callback){
 		client.lrange("users",from,to,function(err,reply){
@@ -55,17 +62,19 @@ function getUsers(from, to, response){
 		});
 	},
 	function(usuarios,callback){
-		var respuestas=new Array();
-		var cont=usuarios.length;
-		for (id in usuarios){
-			client.hgetall(usuarios[id],function (err, replies) {
-				respuestas=respuestas.concat(replies);
+		debugger;
+		var respuestas = new Array();
+		var nresponses = 0;
+		for (id in usuarios) {
+			client.hgetall(usuarios[id], function (err, replies) {
+				debugger;
+				respuestas = respuestas.concat(replies);
 				console.log(replies);
-				cont--;
+				if (++nresponses === usuarios.length) {
+					callback(null, respuestas);
+				}
 		    	});
 		}
-		while(cont>0){}
-		callback(null,respuestas);
 	}],function(err, replies) {
   		if(replies==null){
 			response.writeHead(404, {"Content-Type": "text/plain"});
@@ -101,7 +110,7 @@ function becarios(request,response) {
         });
         request.on('end', function () {
             var posted = qs.parse(body);
-            addUser(posted["id"],posted["email"],posted["nombre_com"],response);
+            addUser(posted["id"],posted["email"],posted["nombre_com"],req_url,response);
         });
     }
 }
